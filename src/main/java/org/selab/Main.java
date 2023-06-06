@@ -73,13 +73,18 @@ public class Main {
                             " order by file_id, commit_id ");
             ResultSet fileRS = fileSel.executeQuery();
             while (fileRS.next()) {
-                String str = String.join(",",
-                        String.valueOf(fileRS.getInt("commit_id")),
-                        fileRS.getString("old_commit"),
-                        fileRS.getString("new_commit"),
-                        fileRS.getString("file_path"),
-                        String.valueOf(fileRS.getInt("file_id")));
-                fileInfo.add(str);
+                StringBuilder sb = new StringBuilder();
+                sb.append(fileRS.getInt("commit_id"))
+                        .append(",")
+                        .append(fileRS.getString("old_commit"))
+                        .append(",")
+                        .append(fileRS.getString("new_commit"))
+                        .append(",")
+                        .append(fileRS.getString("file_path"))
+                        .append(",")
+                        .append(fileRS.getInt("file_id"));
+                fileInfo.add(sb.toString());
+                sb.setLength(0);
             }
 
             fileRS.close();
