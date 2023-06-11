@@ -62,45 +62,26 @@ public class Main {
             File oldReposDir = new File(oldReposPath);
             File newReposDir = new File(newReposPath);
 
-            // Prepare files.
-            List<String> fileInfo = new ArrayList<>();
-
             PreparedStatement fileSel = con.prepareStatement(
                     " select c.commit_id commit_id, c.old_commit old_commit, c.new_commit new_commit, " +
                             " f.file_path file_path, f.file_id file_id " +
                             " from commits c, files f where c.commit_id = f.commit_id and c.project_name = '" + project + "'" +
                             " and c.merged_commit_status != 'T' " +
                             " order by file_id, commit_id ");
+
             ResultSet fileRS = fileSel.executeQuery();
+
+            System.out.println("Collecting data is end.");
+
             while (fileRS.next()) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(fileRS.getInt("commit_id"))
-                        .append(",")
-                        .append(fileRS.getString("old_commit"))
-                        .append(",")
-                        .append(fileRS.getString("new_commit"))
-                        .append(",")
-                        .append(fileRS.getString("file_path"))
-                        .append(",")
-                        .append(fileRS.getInt("file_id"));
-                fileInfo.add(sb.toString());
-                sb.setLength(0);
-            }
+                int commitId = fileRS.getInt("commit_id");
+                String oldCommitId = fileRS.getString("old_commit");
+                String newCommitId = fileRS.getString("new_commit");
+                String filePath = fileRS.getString("file_path");
+                int fileId = fileRS.getInt("file_id");
 
-            fileRS.close();
-            fileSel.close();
-
-            System.out.println("Total " + fileInfo.size() + " revisions.");
-
-            for (int i = 0; i < fileInfo.size(); i++) {
-                String key = fileInfo.get(i);
-                String[] tokens = key.split(",");
-                String commitId = tokens[0];
-                String oldCommitId = tokens[1];
-                String newCommitId = tokens[2];
-                String filePath = tokens[3];
-                String fileId = tokens[4];
-                System.out.println("CommitId : " + commitId + ", fileId : " + fileId + ", oldCommitId : " + oldCommitId + ", newCommitId : " + newCommitId);
+                System.out.println("CommitId : " + commitId + ", fileId : " + fileId + ", oldCommitId : "
+                        + oldCommitId + ", newCommitId : " + newCommitId);
 
                 // Reset hard to old/new commit IDs.
                 long gitResetStartTime = System.currentTimeMillis();
@@ -146,8 +127,8 @@ public class Main {
                                 psIJM.clearParameters();
                                 psIJMrunTime.clearParameters();
 
-                                psIJM.setInt(1, Integer.parseInt(fileId));         //file_id
-                                psIJM.setString(2, toolIJM);          
+                                psIJM.setInt(1, fileId);         //file_id
+                                psIJM.setString(2, toolIJM);
                                 psIJM.setString(3, ijmChange.getChangeType());   // change_type
                                 psIJM.setString(4, ijmChange.getEntityType());
                                 psIJM.setInt(5, ijmChange.getOldStartPos());
@@ -155,7 +136,7 @@ public class Main {
                                 psIJM.setInt(7, ijmChange.getNewStartPos());
                                 psIJM.setInt(8, ijmChange.getNewLength());
 
-                                psIJMrunTime.setInt(1, Integer.parseInt(fileId));         //file_id
+                                psIJMrunTime.setInt(1, fileId);         //file_id
                                 psIJMrunTime.setLong(2, gitResetElapsedTime);
                                 psIJMrunTime.setLong(3, runtimeOfIJM);
 
@@ -183,14 +164,18 @@ public class Main {
                         E.printStackTrace();
                     }
                 }
-                // Committing for the rest of the syntax that has not been committed
-                psIJM.executeBatch();
-                psIJMrunTime.executeBatch();
-                con.commit();
-                psIJM.clearBatch();
-                psIJMrunTime.clearBatch();
+
             }
 
+            // Committing for the rest of the syntax that has not been committed
+            psIJM.executeBatch();
+            psIJMrunTime.executeBatch();
+            con.commit();
+            psIJM.clearBatch();
+            psIJMrunTime.clearBatch();
+
+            fileRS.close();
+            fileSel.close();
 
             if (psIJM != null){psIJM.close(); psIJM = null;}
             if (psIJMrunTime != null){psIJMrunTime.close(); psIJMrunTime = null;}
@@ -201,4 +186,5 @@ public class Main {
             db.close();
         }
     }
+
 }
