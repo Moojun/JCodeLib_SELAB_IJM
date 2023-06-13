@@ -67,7 +67,7 @@ public class Main {
                             " f.file_path file_path, f.file_id file_id " +
                             " from commits c, files f where c.commit_id = f.commit_id and c.project_name = '" + project + "'" +
                             " and c.merged_commit_status != 'T' " +
-                            " order by file_id, commit_id ");
+                            " and f.file_id = 5391942 ");
 
             ResultSet fileRS = fileSel.executeQuery();
 
